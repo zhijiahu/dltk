@@ -18,7 +18,7 @@ def predict(X, W):
 
     # step func to threshold the outputs
     preds[preds <= 0.5] = 0
-    preds[preds > 0] = 1
+    preds[preds > 0.5] = 1
 
     return preds
 
