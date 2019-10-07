@@ -9,6 +9,12 @@ import click
 def sigmoid_activation(x):
     return 1.0 / (1 + np.exp(-x))
 
+def sigmoid_deriv(x):
+    # compute the derivative of the sigmoid function ASSUMING
+    # that `x` has already been passed through the `sigmoid`
+    # function
+    return x * (1 - x)
+
 def predict(X, W):
     """
     :param X: features
@@ -61,7 +67,8 @@ def main(epochs, alpha):
         loss = np.sum(error ** 2)
         losses.append(loss)
 
-        gradient = trainX.T.dot(error)
+        d = error * sigmoid_deriv(preds)
+        gradient = trainX.T.dot(d)
 
 
         W += -alpha * gradient

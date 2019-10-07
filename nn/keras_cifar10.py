@@ -1,11 +1,10 @@
 
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from keras.models import Sequential
 from keras.layers.core import Dense
 from keras.optimizers import SGD
-from sklearn import datasets
+from keras.datasets import cifar10
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
@@ -16,21 +15,24 @@ ap.add_argument('-o', '--output', required=True,
                 help='path to output loss/accuracy plot')
 args = vars(ap.parse_args())
 
-print('[INFO] loading MNIST (full) dataset')
-dataset = datasets.fetch_mldata('MNIST Original')
-
-# normalize
-data = dataset.data.astype('float') / 255.0
-(train_x, test_x, train_y, test_y) = train_test_split(data, dataset.target, test_size=0.25)
+print('[INFO] loading CIFAR-10 dataset')
+((train_x, train_y), (test_x, test_y)) = cifar10.load_data()
+train_x = train_x.astype('float') / 255.0
+test_x = test_x.astype('float') / 255.0
+train_x = train_x.reshape((train_x.shape[0], 3072)) # 32 X 32 X 3
+test_x = test_x.reshape((test_x.shape[0], 3072))
 
 lb = LabelBinarizer()
 train_y = lb.fit_transform(train_y)
 test_y = lb.transform(test_y)
 
+label_names = ["airplane", "automobile", "bird", "cat", "deer",
+              "dog", "frog", "horse", "ship", "truck"]
+
 # build model
 model = Sequential() # feed forward, output of prev layer feeding into next
-model.add(Dense(256, input_shape=(784,), activation='sigmoid'))
-model.add(Dense(128, activation='sigmoid'))
+model.add(Dense(1024, input_shape=(3072,), activation='relu'))
+model.add(Dense(512, activation='relu'))
 model.add(Dense(10, activation='softmax')) # get normalized class probabilities
 
 print('[INFO] training network...')
@@ -39,13 +41,13 @@ model.compile(loss='categorical_crossentropy',
               optimizer=sgd,
               metrics=['accuracy'])
 H = model.fit(train_x, train_y, validation_data=(test_x, test_y),
-              epochs=100, batch_size=128)
+              epochs=100, batch_size=32)
 
 print('[INFO] evaluating network...')
-predictions = model.predict(test_x, batch_size=128)
+predictions = model.predict(test_x, batch_size=32)
 print(classification_report(test_y.argmax(axis=1),
                             predictions.argmax(axis=1),
-                            target_names=[str(x) for x in lb.classes_]))
+                            target_names=label_names))
 
 # plot the training loss and accuracy
 plt.style.use("ggplot")
